@@ -1,0 +1,163 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SHA APS Digitale – Tableau de bord</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root { --vert:#0a8f3c; --orange:#f28c00; --bleu:#2563eb; --fond:#f4f6f8; --carte:#fff; --texte:#1f2937; --gris:#6b7280; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Segoe UI",system-ui,sans-serif; background:var(--fond); color:var(--texte); }
+    header { background:var(--vert); color:#fff; padding:16px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+    .identite { display:flex; align-items:center; gap:14px; }
+    .logo-cnps { display:block; width:auto; height:64px; }
+    header h1 { margin:0; font-size:20px; }
+    header small { opacity:.85; }
+    select { padding:8px 12px; border-radius:8px; border:0; font-size:15px; }
+    main { padding:24px 28px; max-width:1400px; margin:auto; }
+    .cartes { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+    .carte { background:var(--carte); border-radius:12px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .carte .label { color:var(--gris); font-size:13px; }
+    .carte .valeur { font-size:32px; font-weight:700; margin:4px 0; }
+    .delta { font-size:13px; font-weight:600; line-height:1.4; }
+    .delta.bon { color:var(--vert); } .delta.mauvais { color:#dc2626; } .delta.neutre { color:var(--gris); }
+    .grille { display:grid; grid-template-columns:repeat(auto-fit,minmax(480px,1fr)); gap:16px; margin-bottom:24px; }
+    .bloc { background:var(--carte); border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+    .bloc h2 { margin:0 0 8px; font-size:16px; }
+    .alertes { display:grid; grid-template-columns:repeat(auto-fit,minmax(380px,1fr)); gap:16px; }
+    .alertes h3 { margin:0 0 6px; font-size:14px; }
+    .alertes h3.a { color:#b45309; } .alertes h3.b { color:var(--vert); }
+    .alertes ul { margin:0 0 14px; padding-left:18px; font-size:14px; line-height:1.5; }
+    .note { color:var(--gris); font-size:12px; margin-top:8px; }
+    .vide { text-align:center; padding:80px 20px; }
+    code { background:#e5e7eb; padding:2px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+{% if vide %}
+  <div class="vide">
+    <h1>Aucune donnée</h1>
+    <p>Lancez l'import des rapports : <code>python manage.py import_pptx</code></p>
+  </div>
+{% else %}
+  <header>
+    <div class="identite">
+      <img class="logo-cnps" src="{% static 'dashboard/cnps-logo.png' %}" alt="Logo CNPS">
+      <div>
+        <h1>SUIVI HEBDOMADAIRE – APS DIGITALE</h1>
+        <small>Semaine {{ sel.numero }} · {{ sel.periode }}</small>
+      </div>
+    </div>
+    <form method="get">
+      <label>Semaine :
+        <select name="semaine" onchange="this.form.submit()">
+          {% for s in semaines %}
+            <option value="{{ s.numero }}" {% if s.pk == sel.pk %}selected{% endif %}>Semaine {{ s.numero }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </form>
+  </header>
+
+  <main>
+    <section class="cartes">
+      {% for c in cartes %}
+        <div class="carte">
+          <div class="label">{{ c.label }}</div>
+          <div class="valeur">{{ c.valeur }}{{ c.suffixe }}</div>
+          <div class="delta {{ c.classe }}">{{ c.comparaison }}</div>
+        </div>
+      {% endfor %}
+    </section>
+
+    <section class="grille">
+      <div class="bloc"><h2>Volume de contacts par canal</h2><div id="g-canaux"></div></div>
+      <div class="bloc"><h2>Évolution des volumes par type de demande</h2><div id="g-indic"></div></div>
+      <div class="bloc"><h2>Top 10 des motifs – {{ data.semaine }}</h2><div id="g-top"></div></div>
+      <div class="bloc"><h2>Évolution des 5 motifs les plus fréquents</h2><div id="g-evol"></div></div>
+      <div class="bloc"><h2>Réclamations reçues, résolues et taux de résolution</h2><div id="g-recl"></div></div>
+      <div class="bloc"><h2>Backlog de réclamations en cours</h2><div id="g-backlog"></div></div>
+    </section>
+    <p class="note">Les graphiques affichent uniquement les semaines dont les rapports ont été importés. Si une semaine manque, elle n’est pas utilisée dans les comparaisons.</p>
+
+    <section class="bloc">
+      <h2>Points d'alerte et actions – Semaine {{ sel.numero }}</h2>
+      <div class="alertes">
+        <div>
+          <h3 class="a">Centre de contact – alertes</h3>
+          <ul>{% for a in alertes_contact %}<li>{{ a.texte }}</li>{% endfor %}</ul>
+          <h3 class="b">Centre de contact – actions</h3>
+          <ul>{% for a in actions_contact %}<li>{{ a.texte }}</li>{% endfor %}</ul>
+        </div>
+        <div>
+          <h3 class="a">Réclamations – alertes</h3>
+          <ul>{% for a in alertes_recl %}<li>{{ a.texte }}</li>{% endfor %}</ul>
+          <h3 class="b">Réclamations – actions</h3>
+          <ul>{% for a in actions_recl %}<li>{{ a.texte }}</li>{% endfor %}</ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  {{ data|json_script:"data" }}
+  <script>
+    const D = JSON.parse(document.getElementById("data").textContent);
+    const cfg = { responsive: true, displayModeBar: false };
+    const VERT = "#0a8f3c", ORANGE = "#f28c00", BLEU = "#2563eb";
+    const PALETTE = [VERT, ORANGE, BLEU, "#9333ea", "#e11d48"];
+    const base = (extra) => Object.assign({
+      margin: { t: 10, l: 50, r: 20, b: 40 },
+      font: { family: "Segoe UI, sans-serif", size: 12 },
+      paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+      legend: { orientation: "h", y: -0.2 }, height: 340,
+    }, extra || {});
+
+    // 1. Canaux (barres empilées)
+    Plotly.newPlot("g-canaux", [
+      { x: D.labels, y: D.canaux.appels, name: "Appels", type: "bar", marker: { color: VERT } },
+      { x: D.labels, y: D.canaux.mails, name: "Mails", type: "bar", marker: { color: ORANGE } },
+      { x: D.labels, y: D.canaux.messages, name: "Messages", type: "bar", marker: { color: BLEU } },
+    ], base({ barmode: "stack", xaxis: { type: "category" } }), cfg);
+
+    // 2. Indicateurs globaux (lignes)
+    Plotly.newPlot("g-indic", Object.keys(D.indicateurs).map((nom, i) => ({
+      x: D.labels, y: D.indicateurs[nom], name: nom, mode: "lines+markers",
+      line: { color: PALETTE[i % PALETTE.length], width: 3 },
+    })), base({ xaxis: { type: "category" } }), cfg);
+
+    // 3. Top 10 motifs (barres horizontales empilées)
+    const T = D.top_motifs;
+    Plotly.newPlot("g-top", [
+      { y: T.motifs, x: T.appels, name: "Appels", type: "bar", orientation: "h", marker: { color: VERT } },
+      { y: T.motifs, x: T.mails, name: "Mails", type: "bar", orientation: "h", marker: { color: ORANGE } },
+      { y: T.motifs, x: T.messages, name: "Messages", type: "bar", orientation: "h", marker: { color: BLEU } },
+    ], base({ barmode: "stack", height: 420, margin: { t: 10, l: 260, r: 20, b: 40 },
+              yaxis: { autorange: "reversed" } }), cfg);
+
+    // 4. Évolution des 5 motifs principaux
+    Plotly.newPlot("g-evol", Object.keys(D.evolution).map((m, i) => ({
+      x: D.labels, y: D.evolution[m], name: m, mode: "lines+markers",
+      line: { color: PALETTE[i % PALETTE.length], width: 3 },
+    })), base({ height: 420, xaxis: { type: "category" } }), cfg);
+
+    // 5. Réclamations : barres + taux de résolution (axe secondaire)
+    Plotly.newPlot("g-recl", [
+      { x: D.labels, y: D.reclamations.recues, name: "Reçues", type: "bar", marker: { color: ORANGE } },
+      { x: D.labels, y: D.reclamations.resolues, name: "Résolues", type: "bar", marker: { color: VERT } },
+      { x: D.labels, y: D.reclamations.taux, name: "Taux de résolution (%)", yaxis: "y2",
+        mode: "lines+markers", line: { color: BLEU, width: 3 } },
+    ], base({ barmode: "group", xaxis: { type: "category" },
+              yaxis2: { overlaying: "y", side: "right", range: [80, 100], title: "%" } }), cfg);
+
+    // 6. Backlog en cours
+    Plotly.newPlot("g-backlog", [
+      { x: D.labels, y: D.reclamations.backlog_en_cours, name: "Backlog en cours",
+        mode: "lines+markers+text", text: D.reclamations.backlog_en_cours, textposition: "top center",
+        line: { color: "#dc2626", width: 3 } },
+    ], base({ xaxis: { type: "category" } }), cfg);
+  </script>
+{% endif %}
+</body>
+</html>
