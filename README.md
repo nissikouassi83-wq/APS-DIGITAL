@@ -26,6 +26,10 @@ python manage.py runserver
 Si VS Code propose de choisir un interpréteur Python, prenez celui du dossier `.venv`.
 Vous pouvez aussi lancer avec **F5** (menu *Exécuter et déboguer* > « Django : lancer le dashboard »).
 
+## Déploiement sur Vercel
+
+Dans les paramètres du projet Vercel, ajoutez une variable d'environnement nommée `DJANGO_SECRET_KEY` et mettez-y une clé Django générée localement. Gardez cette clé secrète : ne la mettez pas dans le code ni sur GitHub. Après l'avoir ajoutée, redéployez le projet.
+
 ## Chaque semaine
 
 1. Déposer le nouveau fichier dans `data/pptx/` (le nom doit contenir `Sem_NN`, ex. `SHA_APS_DIGITALE_Sem_43.pptx`).

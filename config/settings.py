@@ -1,10 +1,16 @@
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "dev-only-change-me"
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ImproperlyConfigured("Définissez la variable d’environnement DJANGO_SECRET_KEY.")
+
+DEBUG = False
+ALLOWED_HOSTS = ["aps-taupe-eight.vercel.app"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
