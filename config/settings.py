@@ -10,7 +10,14 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Définissez la variable d’environnement DJANGO_SECRET_KEY.")
 
 DEBUG = False
-ALLOWED_HOSTS = ["aps-taupe-eight.vercel.app"]
+ALLOWED_HOSTS = ["aps-taupe-eight.vercel.app"] + [
+    host
+    for host in (
+        os.environ.get("VERCEL_URL"),
+        os.environ.get("VERCEL_PROJECT_PRODUCTION_URL"),
+    )
+    if host
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

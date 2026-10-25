@@ -28,7 +28,7 @@ Vous pouvez aussi lancer avec **F5** (menu *Exécuter et déboguer* > « Django 
 
 ## Déploiement sur Vercel
 
-Dans les paramètres du projet Vercel, ajoutez une variable d'environnement nommée `DJANGO_SECRET_KEY` et mettez-y une clé Django générée localement. Gardez cette clé secrète : ne la mettez pas dans le code ni sur GitHub. Après l'avoir ajoutée, redéployez le projet.
+Pour créer un nouveau projet, importez le dépôt GitHub `nissikouassi83-wq/APS-DIGITAL` dans Vercel et sélectionnez la branche `main`. Dans les variables d'environnement du projet, ajoutez `DJANGO_SECRET_KEY` avec une clé Django générée localement. Gardez cette clé secrète : ne la mettez pas dans le code ni sur GitHub. Laissez les variables système Vercel activées afin que Django reconnaisse le domaine du déploiement. Après avoir ajouté la clé, lancez le déploiement.
 
 ## Chaque semaine
 
