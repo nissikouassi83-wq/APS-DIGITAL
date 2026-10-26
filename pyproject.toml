@@ -1,2 +1,11 @@
+[project]
+name = "aps-digital-dashboard"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "Django>=5.0,<6.0",
+    "python-pptx>=1.0",
+]
+
 [tool.vercel.scripts]
 build = "python manage.py migrate --noinput"
