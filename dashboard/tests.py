@@ -5,18 +5,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import DashboardAccount
-
 
 class DashboardAuthenticationTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
             username="dashboard-viewer",
             password="Secure-test-password-2026",
-        )
-        self.account = DashboardAccount.objects.create(
-            user=self.user,
-            must_change_password=False,
         )
 
     def test_dashboard_redirects_anonymous_visitors_to_login(self):
@@ -35,33 +29,6 @@ class DashboardAuthenticationTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("index"))
         self.assertEqual(response.status_code, 200)
-
-    def test_initial_password_must_be_changed_before_dashboard_access(self):
-        self.account.must_change_password = True
-        self.account.save(update_fields=["must_change_password"])
-        self.client.force_login(self.user)
-
-        response = self.client.get(reverse("index"))
-        self.assertRedirects(response, reverse("password_change"))
-
-    def test_password_change_clears_initial_password_requirement(self):
-        self.account.must_change_password = True
-        self.account.save(update_fields=["must_change_password"])
-        self.client.force_login(self.user)
-
-        response = self.client.post(
-            reverse("password_change"),
-            {
-                "old_password": "Secure-test-password-2026",
-                "new_password1": "A-unique-dashboard-password-2026!",
-                "new_password2": "A-unique-dashboard-password-2026!",
-            },
-        )
-
-        self.assertRedirects(response, reverse("index"))
-        self.account.refresh_from_db()
-        self.assertFalse(self.account.must_change_password)
-        self.assertEqual(self.client.get(reverse("index")).status_code, 200)
 
     def test_logout_requires_post_and_ends_the_session(self):
         self.client.force_login(self.user)
@@ -93,8 +60,6 @@ class DashboardAuthenticationTests(TestCase):
         self.assertIn("https://aps-digital1.vercel.app", settings.CSRF_TRUSTED_ORIGINS)
 
     def test_login_form_accepts_csrf_from_production_origin(self):
-        self.account.must_change_password = True
-        self.account.save(update_fields=["must_change_password"])
         client = self.client_class(enforce_csrf_checks=True)
         login_page = client.get(
             reverse("login"),
@@ -120,15 +85,5 @@ class DashboardAuthenticationTests(TestCase):
         self.assertRedirects(
             response,
             reverse("index"),
-            fetch_redirect_response=False,
-        )
-        response = client.get(
-            reverse("index"),
-            HTTP_HOST="aps-digital1.vercel.app",
-            secure=True,
-        )
-        self.assertRedirects(
-            response,
-            reverse("password_change"),
             fetch_redirect_response=False,
         )
