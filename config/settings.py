@@ -10,7 +10,7 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Définissez la variable d’environnement DJANGO_SECRET_KEY.")
 
 DEBUG = False
-ALLOWED_HOSTS = ["aps-taupe-eight.vercel.app"] + [
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "::1", "aps-taupe-eight.vercel.app"] + [
     host
     for host in (
         os.environ.get("VERCEL_URL"),
@@ -58,14 +58,58 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if DATABASE_URL:
+    import dj_database_url
 
-AUTH_PASSWORD_VALIDATORS = []
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=0,
+            ssl_require=bool(os.environ.get("VERCEL")),
+        )
+    }
+elif os.environ.get("VERCEL"):
+    raise ImproperlyConfigured(
+        "Configurez DATABASE_URL avec une base PostgreSQL persistante sur Vercel."
+    )
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "index"
+LOGOUT_REDIRECT_URL = "login"
+SESSION_COOKIE_SECURE = bool(os.environ.get("VERCEL"))
+CSRF_COOKIE_SECURE = bool(os.environ.get("VERCEL"))
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}"
+    for host in (
+        os.environ.get("VERCEL_URL"),
+        os.environ.get("VERCEL_PROJECT_PRODUCTION_URL"),
+    )
+    if host
+]
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
 
 LANGUAGE_CODE = "fr-fr"
 TIME_ZONE = "Africa/Abidjan"

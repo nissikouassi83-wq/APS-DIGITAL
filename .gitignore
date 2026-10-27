@@ -5,4 +5,9 @@ __pycache__/
 *.pyc
 db.sqlite3
 .env
+.env.*
+!.env.example
 data/pptx/*.pptx
+private-dashboard-data.json
+
+.env*.local

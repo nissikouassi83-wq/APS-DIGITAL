@@ -28,7 +28,19 @@ Vous pouvez aussi lancer avec **F5** (menu *Exécuter et déboguer* > « Django 
 
 ## Déploiement sur Vercel
 
-Pour créer un nouveau projet, importez le dépôt GitHub `nissikouassi83-wq/APS-DIGITAL` dans Vercel et sélectionnez la branche `main`. Dans les variables d'environnement du projet, ajoutez `DJANGO_SECRET_KEY` avec une clé Django générée localement. Gardez cette clé secrète : ne la mettez pas dans le code ni sur GitHub. Laissez les variables système Vercel activées afin que Django reconnaisse le domaine du déploiement. Après avoir ajouté la clé, lancez le déploiement.
+Le tableau de bord exige une connexion. La page d’accueil redirige les visiteurs non connectés vers `/connexion/`. Créez les comptes autorisés avec `python manage.py create_dashboard_user` ; cette commande crée un compte de consultation sans accès à l’administration. Les utilisateurs connectés peuvent changer leur mot de passe depuis le lien « Mot de passe » dans l’en-tête.
+
+Vercel doit utiliser une base PostgreSQL persistante. Ajoutez une intégration PostgreSQL compatible, puis configurez `DATABASE_URL` et `DJANGO_SECRET_KEY` dans les variables d’environnement Vercel. Gardez ces valeurs secrètes et ne les mettez jamais dans GitHub. `DATABASE_URL` est obligatoire sur Vercel : le déploiement échoue volontairement si elle manque, au lieu de démarrer avec une base SQLite éphémère. Laissez les variables système Vercel activées afin que Django reconnaisse le domaine du déploiement.
+
+Pour transférer les données locales vers une base PostgreSQL vide :
+
+1. Depuis la base SQLite locale, exportez les données avec `python manage.py dumpdata dashboard --indent 2 --output private-dashboard-data.json`.
+2. Configurez temporairement `DATABASE_URL` dans votre terminal avec l’URL de la base PostgreSQL Vercel ; ne la mettez pas dans un fichier suivi par Git.
+3. Lancez `python manage.py migrate` puis `python manage.py loaddata private-dashboard-data.json`.
+4. Créez le compte de consultation sur cette même base avec `python manage.py create_dashboard_user`.
+5. Supprimez le fichier de transfert après l’import. Il est exclu de Git par `.gitignore`.
+
+Les rapports PowerPoint, la base SQLite et les mots de passe ne doivent pas être ajoutés au dépôt. Une fois la base et ses comptes prêts, déployez la branche `main` depuis Vercel.
 
 ## Chaque semaine
 
