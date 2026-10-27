@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Semaine(models.Model):
@@ -68,3 +69,15 @@ class Alerte(models.Model):
 
     def __str__(self):
         return f"S{self.semaine.numero} [{self.type}] {self.texte[:50]}"
+
+
+class DashboardAccount(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dashboard_account",
+    )
+    must_change_password = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Accès tableau de bord – {self.user.get_username()}"

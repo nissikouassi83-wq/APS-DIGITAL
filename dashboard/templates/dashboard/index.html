@@ -182,10 +182,6 @@
         <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Activer le mode clair">Mode clair</button>
         {% if user.is_authenticated %}
           <a class="theme-toggle" href="{% url 'password_change' %}">Mot de passe</a>
-          <form method="post" action="{% url 'logout' %}">
-            {% csrf_token %}
-            <button class="theme-toggle" type="submit">Déconnexion</button>
-          </form>
         {% endif %}
       </div>
     </div>

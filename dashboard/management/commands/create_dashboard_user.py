@@ -5,6 +5,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 
+from dashboard.models import DashboardAccount
+
 
 class Command(BaseCommand):
     help = "Create a non-administrator account for the protected dashboard."
@@ -28,5 +30,6 @@ class Command(BaseCommand):
         except ValidationError as error:
             raise CommandError("; ".join(error.messages)) from error
 
-        user_model.objects.create_user(username=username, password=password)
+        user = user_model.objects.create_user(username=username, password=password)
+        DashboardAccount.objects.create(user=user, must_change_password=True)
         self.stdout.write(self.style.SUCCESS(f"Compte « {username} » créé."))
