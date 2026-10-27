@@ -10,7 +10,13 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Définissez la variable d’environnement DJANGO_SECRET_KEY.")
 
 DEBUG = False
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "::1", "aps-taupe-eight.vercel.app"] + [
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "aps-taupe-eight.vercel.app",
+    "aps-digital1.vercel.app",
+] + [
     host
     for host in (
         os.environ.get("VERCEL_URL"),
@@ -87,7 +93,7 @@ LOGOUT_REDIRECT_URL = "login"
 SESSION_COOKIE_SECURE = bool(os.environ.get("VERCEL"))
 CSRF_COOKIE_SECURE = bool(os.environ.get("VERCEL"))
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS = ["https://aps-digital1.vercel.app"] + [
     f"https://{host}"
     for host in (
         os.environ.get("VERCEL_URL"),

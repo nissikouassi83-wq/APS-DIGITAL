@@ -1,3 +1,6 @@
+import re
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -52,3 +55,35 @@ class DashboardAuthenticationTests(TestCase):
         response = self.client.get(reverse("password_change"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Changer le mot de passe")
+
+    def test_vercel_production_domain_is_trusted_for_csrf(self):
+        self.assertIn("https://aps-digital1.vercel.app", settings.CSRF_TRUSTED_ORIGINS)
+
+    def test_login_form_accepts_csrf_from_production_origin(self):
+        client = self.client_class(enforce_csrf_checks=True)
+        login_page = client.get(
+            reverse("login"),
+            HTTP_HOST="aps-digital1.vercel.app",
+            secure=True,
+        )
+        self.assertEqual(login_page.status_code, 200)
+        csrf_token = re.search(
+            rb'name="csrfmiddlewaretoken" value="([^"]+)"',
+            login_page.content,
+        ).group(1).decode()
+        response = client.post(
+            reverse("login"),
+            {
+                "username": self.user.username,
+                "password": "Secure-test-password-2026",
+                "csrfmiddlewaretoken": csrf_token,
+            },
+            HTTP_HOST="aps-digital1.vercel.app",
+            HTTP_ORIGIN="https://aps-digital1.vercel.app",
+            secure=True,
+        )
+        self.assertRedirects(
+            response,
+            reverse("index"),
+            fetch_redirect_response=False,
+        )
